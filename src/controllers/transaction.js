@@ -8,6 +8,7 @@ const qs = require('querystring')
 exports.createTransaction = async (req, res) => {
   try {
     const data = req.body
+    console.log(data, '<<<<<<<< ini data')
     const pinUser = await userModel.getUsersByCondition({ id: req.userData.id })
     const compare = bcrypt.compareSync(data.pin, pinUser[0].pin)
     if (compare) {
