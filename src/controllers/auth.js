@@ -45,7 +45,7 @@ exports.signUp = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body
+    const { email, password, token: notifToken } = req.body
     const existingUser = await userModel.getUsersByCondition({ email })
     if (existingUser.length > 0) {
       if (existingUser[0].status !== 'pending') {
@@ -55,6 +55,15 @@ exports.login = async (req, res) => {
           const token = jwt.sign({ id, email, role, firstname, lastname, phoneNumber, picture }, APP_KEY)
           const results = {
             token: token
+          }
+          if (notifToken) {
+            try {
+              await userModel.updateUser(id, {
+                token: notifToken
+              })
+            } catch (err) {
+              return response(res, 400, false, 'Bad Request')
+            }
           }
           return response(res, 200, true, 'Login succesfully', results)
         } else {
@@ -105,7 +114,7 @@ exports.forgotPasswordMobile = async (req, res) => {
     const existingUser = await userModel.getUsersByCondition({ email })
     if (existingUser.length > 0) {
       const id = existingUser[0].id
-      sendEmail(existingUser[0].id, 'https://abusayap.netlify.app/create-new-password', 'Reset Password', 'To reset your password, click the following link and follow the instructions.')
+      sendEmail(existingUser[0].id, 'https://abusayap2.netlify.app/', 'Reset Password', 'To reset your password, click the following link and follow the instructions.')
       return response(res, 200, true, 'Please check email to reset password!', { id })
     }
     return response(res, 401, false, 'Email not registered')
@@ -159,6 +168,20 @@ exports.createPin = async (req, res) => {
     }
     return response(res, 400, false, 'Failed Created PIN')
   } catch (error) {
+    return response(res, 400, false, 'Bad Request')
+  }
+}
+
+exports.logout = async (req, res) => {
+  const { id } = req.userData
+
+  try {
+    await userModel.updateUser(id, {
+      token: null
+    })
+    return response(res, 200, true, 'Success to logout')
+  } catch (err) {
+    console.log(err)
     return response(res, 400, false, 'Bad Request')
   }
 }

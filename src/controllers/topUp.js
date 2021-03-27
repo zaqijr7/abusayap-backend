@@ -51,7 +51,7 @@ exports.updateTopUp = async (req, res) => {
     const updateBelance = await userModel.updateUser(topup[0].idUser, { balance: balance })
     if (initialresults.affectedRows > 0 && updateBelance.affectedRows > 0) {
       const results = await topUpModel.getTopUpByCondition({ id })
-      req.socket.emit(`Update_Top_Up_${id}`, id)
+      req.socket.emit(`Update_Top_Up_${topup[0].idUser}`, topup[0].idUser)
       return response(res, 200, true, `Update status ${status === 'accept' ? status : 'reject'}`, {
         ...results[0],
         name: `${user[0].firstname} ${user[0].lastname}`

@@ -4,6 +4,7 @@ const userModel = require('../models/users')
 const response = require('../helpers/response')
 const bcrypt = require('bcrypt')
 const qs = require('querystring')
+const { sendNotif } = require('../helpers/firebase')
 
 exports.createTransaction = async (req, res) => {
   try {
@@ -64,8 +65,19 @@ exports.createTransaction = async (req, res) => {
             }
           ]
         }
-        req.socket.emit(`Receive_Transaction_${finalResults[0].idReceiver}`, myData)
-        return response(res, 200, true, 'Transaction successfully created', myData)
+
+        try {
+          const results = await userModel.getUsersByCondition({
+            id: finalResults[0].idReceiver
+          })
+          console.log(results)
+          sendNotif(results[0].token, 'Successfully transfer', "You've got money", 'Transaction')
+          req.socket.emit(`Receive_Transaction_${finalResults[0].idReceiver}`, myData)
+          return response(res, 200, true, 'Transaction successfully created', myData)
+        } catch (err) {
+          console.log(err)
+          return response(res, 200, false, 'Transaction successfully created')
+        }
       } else {
         return response(res, 400, false, 'Balance is not enough')
       }
