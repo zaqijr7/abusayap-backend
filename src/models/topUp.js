@@ -53,7 +53,7 @@ exports.getAllTopUp = (cond) => {
     ${cond.dateMin && cond.dateMax
         ? `AND dateTransaction BETWEEN '${cond.dateMin} 00:00:00'  AND '${cond.dateMax} 23:59:00' AND`
         : ''}
-    CONCAT(u.firstname, ' ', u.lastname) LIKE "%${cond.search}%"
+    t.id LIKE "%${cond.search}%"
     ORDER BY ${cond.sort} ${cond.order}
     LIMIT ${cond.limit} OFFSET ${cond.offset}
     `, (err, res, field) => {
@@ -74,9 +74,7 @@ exports.getCountAllTopUp = (cond) => {
     ${cond.dateMin && cond.dateMax
         ? `AND dateTransaction BETWEEN '${cond.dateMin} 00:00:00'  AND '${cond.dateMax} 23:59:00' AND`
         : ''}
-    CONCAT(u.firstname, ' ', u.lastname) LIKE "%${cond.search}%"
-    ORDER BY ${cond.sort} ${cond.order}
-    LIMIT ${cond.limit} OFFSET ${cond.offset}
+    t.id LIKE "%${cond.search}%"
     `, (err, res, field) => {
       if (err) reject(err)
       resolve(res)

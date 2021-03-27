@@ -48,8 +48,9 @@ const upload = (req, res, next) => {
         success: false,
         message: 'Picture is requeired!'
       })
+    } else {
+      return next()
     }
-    next()
   })
 }
 

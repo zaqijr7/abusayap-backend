@@ -18,8 +18,8 @@ exports.createdTopUp = async (req, res) => {
     const initialresults = await topUpModel.createTopUp({ idUser: id, ...data, picture })
     if (initialresults.affectedRows > 0) {
       const results = await topUpModel.getTopUpByCondition({ id: initialresults.insertId })
-      return response(res, 400, false, 'Thanks to top up, Waiting confirmation admin', {
-        ...results
+      return response(res, 200, true, 'Thanks to top up, Waiting confirmation admin', {
+        ...results[0]
       })
     }
     return response(res, 400, false, 'Top up failed')
@@ -41,6 +41,7 @@ exports.updateTopUp = async (req, res) => {
     }
 
     const user = await userModel.getUsersByCondition({ id: topup[0].idUser })
+    console.log(user[0])
     if (user.length === 0) {
       return response(res, 404, false, 'User not found')
     }
@@ -48,11 +49,12 @@ exports.updateTopUp = async (req, res) => {
 
     const initialresults = await topUpModel.updateTopUp(id, { idAdmin, status })
     const updateBelance = await userModel.updateUser(topup[0].idUser, { balance: balance })
-    console.log(updateBelance)
     if (initialresults.affectedRows > 0 && updateBelance.affectedRows > 0) {
       const results = await topUpModel.getTopUpByCondition({ id })
-      return response(res, 400, false, `Update status ${status === 'accept' ? status : 'reject'}`, {
-        ...results
+      req.socket.emit(`Update_Top_Up_${id}`, id)
+      return response(res, 200, true, `Update status ${status === 'accept' ? status : 'reject'}`, {
+        ...results[0],
+        name: `${user[0].firstname} ${user[0].lastname}`
       })
     }
     return response(res, 400, false, 'Update top up failed')
@@ -76,7 +78,6 @@ exports.getAllTopUp = async (req, res) => {
     const totalPage = Math.ceil(Number(totalData[0].totalData) / cond.limit)
 
     const results = await topUpModel.getAllTopUp(cond)
-    console.log(results)
 
     return response(res, 200, true, 'List Top Up Data', results,
       {
