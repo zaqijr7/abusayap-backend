@@ -99,7 +99,7 @@ exports.forgotPassword = async (req, res) => {
     if (existingUser.length > 0) {
       const id = existingUser[0].id
       const token = jwt.sign({ id }, APP_KEY)
-      sendEmail(existingUser[0].id, `https://abusayap.netlify.app/create-new-password/${token}`, 'Reset Password', 'To reset your password, click the following link and follow the instructions.')
+      sendEmail(existingUser[0].id, `https://54.208.199.77:81/create-new-password/${token}`, 'Reset Password', 'To reset your password, click the following link and follow the instructions.')
       return response(res, 200, true, 'Please check email to reset password!', { id: token })
     }
     return response(res, 401, false, 'Email not registered')
