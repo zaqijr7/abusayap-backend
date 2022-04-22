@@ -12,15 +12,15 @@ const storage = multer.diskStorage({
 
 const fileFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname)
-
   if (ext !== '.png' && ext !== '.jpg' && ext !== '.gif' && ext !== '.jpeg') {
+    console.log('masuk error')
     return cb(new Error('Only images are allowed'), 'test')
   }
   cb(null, true)
 }
 
 const limits = {
-  fileSize: 1 * 1024 * 1024
+  fileSize: 1024 * 1024
 }
 
 const uploadMovies = multer({
@@ -29,8 +29,10 @@ const uploadMovies = multer({
   limits: limits
 }).single('picture')
 
-const upload = (req, res, next) => {
-  uploadMovies(req, res, (err) => {
+const upload = async (req, res, next) => {
+  console.log(req.file, 'INI DILE')
+  uploadMovies(req, res, async (err) => {
+    console.log(req.file, 'INI DILE dalam multer')
     if (err instanceof multer.MulterError) {
       console.log(multer.MulterError)
       return res.json({
@@ -44,7 +46,7 @@ const upload = (req, res, next) => {
         message: 'Failed to upload picture!'
       })
     }
-    next()
+    return next()
   })
 }
 

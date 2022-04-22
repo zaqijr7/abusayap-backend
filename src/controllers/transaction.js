@@ -9,7 +9,6 @@ const { sendNotif } = require('../helpers/firebase')
 exports.createTransaction = async (req, res) => {
   try {
     const data = req.body
-    console.log(data, '<<<<<<<< ini data')
     const pinUser = await userModel.getUsersByCondition({ id: req.userData.id })
     const dataReceiver = await userModel.getUsersByCondition({ id: data.idReceiver })
     if (dataReceiver.length === 0) {
@@ -181,7 +180,7 @@ exports.trasactionHistory = async (req, res) => {
     }
 
     console.log(totalData)
-    return response(res, 200, true, 'No transactions')
+    return response(res, 404, true, 'No transactions')
   } catch (err) {
     console.log(err)
     return response(res, 400, false, 'Bad Request')

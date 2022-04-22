@@ -13,30 +13,25 @@ const app = express()
 
 // define client
 const whiteList = [
-  '*'
+  'http://127.0.0.1:8080'
 ]
 
 // setup socket.io
 const server = http.createServer(app)
 const io = socketIo(server, {
-  cors: {
-    origin: '*'
-  }
+  cors: whiteList.map(origin => ({ origin }))
 })
 
 io.on('connection', () => {
   console.log('a user connected')
 })
 
-const socket = require('./src/middleware/socket')
-app.use(socket(io))
-
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(morgan('dev'))
 app.use(cors('*'))
 app.use(require('./src/middleware/socket')(io))
 
-app.use('/upload', express.static('upload'))
+app.use('/upload', express.static('./upload'))
 
 // Put Routes in here
 app.use('/auth', require('./src/routes/auth'))

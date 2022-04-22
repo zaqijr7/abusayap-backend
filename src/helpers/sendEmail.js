@@ -6,13 +6,22 @@ const path = require('path')
 const { EMAIL_USER, EMAIL_PASS } = process.env
 
 module.exports = async (id, url, subject, message) => {
+  // id, url, subject, message
   const template = fs.readFileSync(path.resolve(__dirname, './template.html'), 'utf-8')
 
   const transporter = mailer.createTransport({
     service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    ignoreTLS: false,
+    secure: false, // true for 465, false for other ports
     auth: {
       user: EMAIL_USER,
       pass: EMAIL_PASS
+    },
+    tls: {
+      // do not fail on invalid certs
+      rejectUnauthorized: false
     }
   })
 
@@ -33,5 +42,12 @@ module.exports = async (id, url, subject, message) => {
   transporter.sendMail(mailOptions, (err, info) => {
     if (err) throw err
     console.log('Email sent: ' + info.response)
+  })
+  transporter.verify(function (error, success) {
+    if (error) {
+      console.log(error)
+    } else {
+      console.log('Server is ready to take our messages')
+    }
   })
 }

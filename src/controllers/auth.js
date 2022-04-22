@@ -3,7 +3,7 @@ const response = require('../helpers/response')
 const sendEmail = require('../helpers/sendEmail')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
-const { APP_KEY, APP_URL } = process.env
+const { APP_KEY, APP_URL, REACT_APP_URL } = process.env
 
 exports.signUp = async (req, res) => {
   try {
@@ -28,7 +28,9 @@ exports.signUp = async (req, res) => {
         createUser = await userModel.createUser({ firstname, email, password: encryptedPassword, role: 2, status: 'active', balance: 120000 })
       }
       if (createUser.insertId > 0) {
-        sendEmail(createUser.insertId, `${APP_URL}/auth/verification/${createUser.insertId}`, 'Verify Email Address', "Thanks for signing up for ABUSAYAP! We're excited to have you as an early user.")
+        const id = createUser.insertId
+        const token = jwt.sign({ id }, APP_KEY)
+        sendEmail(createUser.insertId, `${APP_URL}/auth/verification/${token}`, 'Verify Email Address', "Thanks for signing up for ABUSAYAP! We're excited to have you as an early user.")
         return response(res, 200, true, 'Register Success, Please verification email!', {
           id: createUser.insertId
         })
@@ -81,10 +83,11 @@ exports.login = async (req, res) => {
 
 exports.verificationEmail = async (req, res) => {
   try {
-    const { id } = req.params
-    if (id) {
-      await userModel.updateUser(id, { status: 'active' })
-      return res.redirect(`https://abusayap.netlify.app/create-pin/${id}`)
+    const { token } = req.params
+    const data = jwt.decode(token)
+    if (data) {
+      await userModel.updateUser(data.id, { status: 'active' })
+      return res.redirect(`${REACT_APP_URL}/create-pin/${token}`)
     }
     return response(res, 400, false, 'Failed email verification')
   } catch (error) {
@@ -99,7 +102,7 @@ exports.forgotPassword = async (req, res) => {
     if (existingUser.length > 0) {
       const id = existingUser[0].id
       const token = jwt.sign({ id }, APP_KEY)
-      sendEmail(existingUser[0].id, `https://54.208.199.77:81/create-new-password/${token}`, 'Reset Password', 'To reset your password, click the following link and follow the instructions.')
+      sendEmail(existingUser[0].id, `${REACT_APP_URL}/create-new-password/${token}`, 'Reset Password', 'To reset your password, click the following link and follow the instructions.')
       return response(res, 200, true, 'Please check email to reset password!', { id: token })
     }
     return response(res, 401, false, 'Email not registered')
@@ -114,7 +117,8 @@ exports.forgotPasswordMobile = async (req, res) => {
     const existingUser = await userModel.getUsersByCondition({ email })
     if (existingUser.length > 0) {
       const id = existingUser[0].id
-      sendEmail(existingUser[0].id, 'https://abusayap2.netlify.app/', 'Reset Password', 'To reset your password, click the following link and follow the instructions.')
+      // sendEmail(existingUser[0].id, 'https://abusayap2.netlify.app/', 'Reset Password', 'To reset your password, click the following link and follow the instructions.')
+      sendEmail(existingUser[0].id, 'Reset Password')
       return response(res, 200, true, 'Please check email to reset password!', { id })
     }
     return response(res, 401, false, 'Email not registered')
@@ -158,13 +162,16 @@ exports.resetPasswordMobile = async (req, res) => {
 
 exports.createPin = async (req, res) => {
   try {
-    const { id } = req.params
+    const { token } = req.params
     const { pin } = req.body
-    const salt = await bcrypt.genSalt()
-    const encryptedPin = await bcrypt.hash(pin, salt)
-    const update = await userModel.updateUser(id, { pin: encryptedPin })
-    if (update.affectedRows > 0) {
-      return response(res, 200, true, 'Your PIN Was Successfully Created')
+    const data = jwt.verify(token, APP_KEY)
+    if (data) {
+      const salt = await bcrypt.genSalt()
+      const encryptedPin = await bcrypt.hash(pin, salt)
+      const update = await userModel.updateUser(data.id, { pin: encryptedPin })
+      if (update.affectedRows > 0) {
+        return response(res, 200, true, 'Your PIN Was Successfully Created')
+      }
     }
     return response(res, 400, false, 'Failed Created PIN')
   } catch (error) {
